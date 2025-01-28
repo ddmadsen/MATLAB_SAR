@@ -280,14 +280,27 @@ function write_cphd_vbmeta(cphd_fid, cphd_meta, nbdata)
         vectorParametersFlatten = rmfield(vectorParametersFlatten, 'RcvAntenna');
         vectorParametersFlatten = setstructfields(vectorParametersFlatten, cphd_meta.PVP.RcvAntenna);
     end
+    if isfield(vectorParametersFlatten, 'AddedPVP')
+        vectorParametersFlatten = rmfield(vectorParametersFlatten, 'AddedPVP');
+        for i = 1:numel(cphd_meta.PVP.AddedPVP)
+            try
+              addedPVP = cphd_meta.PVP.AddedPVP{i};
+            catch
+              addedPVP = cphd_meta.PVP.AddedPVP(i);
+            end
+            vectorParametersFlatten.(addedPVP.Name).Offset = addedPVP.Offset;
+            vectorParametersFlatten.(addedPVP.Name).Size = addedPVP.Size;
+            vectorParametersFlatten.(addedPVP.Name).Format = addedPVP.Format;
+        end
+    end
     if isfield(vectorParametersFlatten,'TxPulse')
         vectorParametersFlatten = rmfield(vectorParametersFlatten, 'TxPulse');
         vectorParametersFlatten = setstructfields(vectorParametersFlatten, cphd_meta.PVP.TxPulse);
     end
     if isfield(vectorParametersFlatten,'TxAntenna')
         vectorParametersFlatten = rmfield(vectorParametersFlatten, 'TxAntenna');
-        vectorParametersFlatten = setstructfields(vectorParametersFlatten, cphd_meta.PVP.TxPulse.TxAntenna);
-    end
+        vectorParametersFlatten = setstructfields(vectorParametersFlatten, cphd_meta.PVP.TxAntenna);
+    end    
     vectorParametersCell = fieldnames(vectorParametersFlatten);
     vb_array = zeros(cphd_meta.Data.NumBytesPVP/8,length(nbdata.TxTime));
     for i = 1:length(vectorParametersCell)
