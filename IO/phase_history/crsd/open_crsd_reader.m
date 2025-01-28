@@ -47,7 +47,7 @@ if isfield(vectorParametersFlatten,'TxPulse')
 end
 if isfield(vectorParametersFlatten,'TxAntenna')
     vectorParametersFlatten = rmfield(vectorParametersFlatten, 'TxAntenna');
-    vectorParametersFlatten = setstructfields(vectorParametersFlatten, xml_meta.PVP.TxPulse.TxAntenna);
+    vectorParametersFlatten = setstructfields(vectorParametersFlatten, xml_meta.PVP.TxAntenna);
 end
 vectorParametersCell = fieldnames(vectorParametersFlatten);
 % Iterate through channels to extract vector-based metadata
