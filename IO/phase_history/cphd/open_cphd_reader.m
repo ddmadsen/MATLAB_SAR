@@ -42,6 +42,27 @@ end
 % from file the vector-based metadata for the selected vectors, but it
 % hardly seems necessary as fast as this goes.
 vectorParametersFlatten = xml_meta.PVP;
+if isfield(vectorParametersFlatten,'RcvAntenna')
+    vectorParametersFlatten = rmfield(vectorParametersFlatten, 'RcvAntenna');
+    vectorParametersFlatten = setstructfields(vectorParametersFlatten, xml_meta.PVP.RcvAntenna);
+end
+if isfield(vectorParametersFlatten, 'AddedPVP')
+    vectorParametersFlatten = rmfield(vectorParametersFlatten, 'AddedPVP');
+    for i = 1:numel(xml_meta.PVP.AddedPVP)
+        try
+          addedPVP = xml_meta.PVP.AddedPVP{i};
+        catch
+          addedPVP = xml_meta.PVP.AddedPVP(i);
+        end
+        vectorParametersFlatten.(addedPVP.Name).Offset = addedPVP.Offset;
+        vectorParametersFlatten.(addedPVP.Name).Size = addedPVP.Size;
+        vectorParametersFlatten.(addedPVP.Name).Format = addedPVP.Format;
+    end
+end
+if isfield(vectorParametersFlatten,'TxAntenna')
+    vectorParametersFlatten = rmfield(vectorParametersFlatten, 'TxAntenna');
+    vectorParametersFlatten = setstructfields(vectorParametersFlatten, xml_meta.PVP.TxAntenna);
+end
 vectorParametersCell = fieldnames(vectorParametersFlatten);
 % Iterate through channels to extract vector-based metadata
 BYTES_PER_ELEMENT = 8; % Everything in vector-based metadata is of type double
@@ -55,30 +76,9 @@ for i = 1:xml_meta.Data.NumCPHDChannels
     vb_array = fread(fid, [(xml_meta.Data.NumBytesPVP/BYTES_PER_ELEMENT) xml_meta.Data.Channel(i).NumVectors], 'double');
     % Distribute vector-based metadata into a structure
     for j = 1:numel(vectorParametersCell)
-        if(contains(vectorParametersCell{j},'AddedPVP'))
-            for jj = 1:numel(xml_meta.PVP.(vectorParametersCell{j}))
-                try
-                    vbp_all(i).(xml_meta.PVP.(vectorParametersCell{j}){jj}.Name) = ...
-                    vb_array(xml_meta.PVP.(vectorParametersCell{j}){jj}.Offset+...
-                    (1:xml_meta.PVP.(vectorParametersCell{j}){jj}.Size),:).';
-                catch
-                    vbp_all(i).(xml_meta.PVP.(vectorParametersCell{j}).Name) = ...
-                    vb_array(xml_meta.PVP.(vectorParametersCell{j}).Offset+...
-                    (1:xml_meta.PVP.(vectorParametersCell{j}).Size),:).';
-                end
-            end
-        elseif(contains(vectorParametersCell{j},{'TxAntenna','RcvAntenna'}))
-            antennaVectorParametersCell = fieldnames(xml_meta.PVP.(vectorParametersCell{j}));
-            for jj = 1:numel(antennaVectorParametersCell)
-                vbp_all(i).(vectorParametersCell{j}).(antennaVectorParametersCell{jj}) = ...
-                vb_array(xml_meta.PVP.(vectorParametersCell{j}).(antennaVectorParametersCell{jj}).Offset+...
-                (1:xml_meta.PVP.(vectorParametersCell{j}).(antennaVectorParametersCell{jj}).Size),:).';
-            end
-        else
-            vbp_all(i).(vectorParametersCell{j}) = ...
-            vb_array(xml_meta.PVP.(vectorParametersCell{j}).Offset+...
-            (1:xml_meta.PVP.(vectorParametersCell{j}).Size),:).';
-        end
+        vbp_all(i).(vectorParametersCell{j}) = ...
+            vb_array(vectorParametersFlatten.(vectorParametersCell{j}).Offset+...
+            (1:vectorParametersFlatten.(vectorParametersCell{j}).Size),:).';
     end
 end
 
